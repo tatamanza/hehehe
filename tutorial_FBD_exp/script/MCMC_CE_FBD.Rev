@@ -1,0 +1,43 @@
+# move/monitor indexes
+mni = 1
+mvi = 1
+
+# load taxon names #
+taxa <- readTaxonData("data/dip_taxa.tsv")
+
+# load data matrices #
+dip <- readDiscreteCharacterData("data/12loci.nex")
+# morpho <- readDiscreteCharacterData("data/dip_morphology.nex")# don't have this matrix for Dipsacales #
+
+# add ? for all taxa that are not in the datamatrices #
+dip.addMissingTaxa( taxa )
+# morpho.addMissingTaxa( taxa )#
+
+# add ? for all taxa that are not in the datamatrices # added from tutorial bcz of the error: couldnt find Patrinia hokiana in# 
+                                                      #HomologousDiscreteCharacterData matrix#
+dip.addMissingTaxa( taxa )
+# morpho.addMissingTaxa( taxa )#
+
+n_taxa <- taxa.size()
+
+n_taxa <- taxa.size()
+
+#create variable that will contain all of the MCMC moves used to propose new states for every stochastic node in the model graph#
+moves = VectorMoves()
+
+source("script/tree_CE_FBD.Rev") # FBD tree prior #
+source("script/clock_relaxed_exponential_CE_FBD.Rev") # UExp relaxed clock #
+source("script/model_GTRG_CE_FBD.Rev") # Molecular substitution model (GTR+G)#
+# source("script/model_morph.Rev") # Morphological character change model#
+
+mymodel = model(sf)
+
+monitors = VectorMonitors()
+
+monitors.append( mnModel(filename="output/dip.log", printgen=10) )
+monitors.append( mnFile(filename="output/dip.trees", printgen=10, pruned_tree) )
+monitors.append( mnScreen(printgen=10, num_samp_anc, origin_time) )
+
+mymcmc = mcmc(mymodel, monitors, moves)
+mymcmc.run(generations=10000)
+

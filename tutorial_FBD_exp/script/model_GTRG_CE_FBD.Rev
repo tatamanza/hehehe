@@ -1,0 +1,23 @@
+sf_hp <- v(1,1,1,1)
+sf ~ dnDirichlet(sf_hp)
+
+er_hp <- v(1,1,1,1,1,1)
+er ~ dnDirichlet(er_hp)
+
+moves.append( mvSimplexElementScale(er, alpha=10.0, weight=5.0) )
+moves.append( mvSimplexElementScale(sf, alpha=10.0, weight=5.0) )
+
+Q_dip := fnGTR(er,sf)
+
+alpha_dip ~ dnExponential( 1.0 )
+
+moves.append( mvScale(alpha_dip, lambda=0.01, weight=1.0) )
+moves.append( mvScale(alpha_dip, lambda=0.1,  weight=1.0) )
+moves.append( mvScale(alpha_dip, lambda=1,    weight=1.0) )
+
+rates_dip := fnDiscretizeGamma( alpha_dip, alpha_dip, 4 )
+
+phySeq ~ dnPhyloCTMC(tree=fbd_tree, Q=Q_dip, siteRates=rates_dip, branchRates=branch_rates, type="DNA")
+phySeq.clamp(dip)
+
+

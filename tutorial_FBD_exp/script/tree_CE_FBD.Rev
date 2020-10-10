@@ -1,0 +1,212 @@
+speciation_rate ~ dnExponential(10)
+extinction_rate ~ dnExponential(10)
+
+moves.append( mvScale(speciation_rate, lambda=0.01, weight=1) )
+moves.append( mvScale(speciation_rate, lambda=0.1,  weight=1) )
+moves.append( mvScale(speciation_rate, lambda=1.0,  weight=1) )
+
+moves.append( mvScale(extinction_rate, lambda=0.01, weight=1) )
+moves.append( mvScale(extinction_rate, lambda=0.1,  weight=1) )
+moves.append( mvScale(extinction_rate, lambda=1,    weight=1) )
+
+diversification := speciation_rate - extinction_rate
+turnover := extinction_rate/speciation_rate
+
+#probability of sampling extant taxa#
+rho <- 0.054
+
+#fossil sampling (or recovery) rate#
+psi ~ dnExponential(10) 
+
+moves.append( mvScale(psi, lambda=0.01, weight=1) )
+moves.append( mvScale(psi, lambda=0.1,  weight=1) )
+moves.append( mvScale(psi, lambda=1,    weight=1) )
+
+#origin time of bears; FBD will be conditioned on it#
+origin_time ~ dnUnif(105.0, 185.0)
+
+moves.append( mvSlide(origin_time, delta=0.01, weight=5.0) )
+moves.append( mvSlide(origin_time, delta=0.1,  weight=5.0) )
+moves.append( mvSlide(origin_time, delta=1,    weight=5.0) )
+
+#define the FBD tree prior distribution#
+fbd_dist = dnFBDP(origin=origin_time, lambda=speciation_rate, mu=extinction_rate, psi=psi, rho=rho, taxa=taxa)
+
+# Define clade constraints 
+# adding fossil species to their clades since not present in molecular matrix #
+clade3_Sixalix_group 																= clade("Sixalix_farinosa", "Lomelosia_albocinta")
+clade4_Pycnocomon_group 															= clade(clade3_Sixalix_group, "Pycnocomon_canus")
+clade5_Sixalix_Lomelosia_Pycnocomon_Pteracephalodes 								= clade(clade4_Pycnocomon_group, "Pteracephalodes_hookeri")
+clade6_Bassecoia_group 																= clade(clade5_Sixalix_Lomelosia_Pycnocomon_Pteracephalodes, "Bassecoia_siamensis")
+clade7_Dipsacus_group 																= clade("Dipsacus_fullomum", "Cephalaria_gigantea")
+clade8_Dipsacus_Cephalaria_Succisa 													= clade(clade7_Dipsacus_group, "Succisa_pratensis")
+clade9_Knautia_group 																= clade(clade8_Dipsacus_Cephalaria_Succisa, "Knautia_macedonica")
+clade10_Dipsaceae 																	= clade(clade6_Bassecoia_group, clade9_Knautia_group)
+clade11_Dipsacoideae 																= clade(clade10_Dipsaceae, "Triplostegia_grandulifera")
+clade12_Plectritis_Valeriana 														= clade("Plectritis_congesta", "Valeriana_lobata")
+clade13_Plectritis_Valeriana_Centranthus 											= clade(clade12_Plectritis_Valeriana,"Centranthus_ruber")
+clade14_Valeriana_Fedia 															= clade("Valeriana_microphylla", "Fedia_cornucopiae")
+clade15_Fedia_upwards_small_group 													= clade(clade13_Plectritis_Valeriana_Centranthus, clade14_Valeriana_Fedia)
+clade16_Fedia_upwards_small_group_Nardostachys 										= clade(clade15_Fedia_upwards_small_group, "Nardostachys_jatamansi")
+clade61_FPatrinia_hokiana                                                           = clade("Patrinia_hokiana", "Patrina_triloba")
+clade17_Valerianoideae 																= clade(clade16_Fedia_upwards_small_group_Nardostachys, clade61_FPatrinia_hokiana)
+clade18_Dipsacoideae_Valerianoideae 												= clade(clade11_Dipsacoideae, clade17_Valerianoideae)
+clade19_Cryptothaldia_Morina 														= clade("Cryptothladia_kokonorica", "Morina_longifolia")
+clade20_Morinaceae 																	= clade(clade19_Cryptothaldia_Morina, "Acanthocalyx_nepalensis_ssp_delevaya")
+clade21_Dipsacoideae_Valerianoideae_Morinaceae 										= clade(clade18_Dipsacoideae_Valerianoideae, clade20_Morinaceae)
+clade23_Diabelia_Abelia 															= clade("Diabelia_tetrasepala", "Abelia_uniflora")
+clade24_Diabelia_Abelia_Kolkwitzia 													= clade(clade23_Diabelia_Abelia, "Kolkwitzia_amabilis")
+clade63_FDipelta_bovayensis															= clade("Dipelta_bovayensis", "Dipelta_floribunda")
+clade24a_Diabelia_Abelia_Kolkwitzia_Dipelta 										= clade(clade24_Diabelia_Abelia_Kolkwitzia, clade63_FDipelta_bovayensis)
+clade62_FDiplodipelta_reniptera														= clade("Diplodipelta_reniptera", clade24a_Diabelia_Abelia_Kolkwitzia_Dipelta)
+clade25_Linneae_Veslea 																= clade("Linnaea_borealis", "Vesalea_coriacea")
+clade26_Linneeae 																	= clade(clade62_FDiplodipelta_reniptera, clade25_Linneae_Veslea)
+clade27_Zabelia 																	= clade("Zabelia_dielsii", "Zabelia_tyaihyoni")
+clade28_Linnaeoideae 																= clade(clade26_Linneeae, clade27_Zabelia)
+clade29_Dipsacoideae_Valerianoideae_Morinaceae_Linnaeoideae 						= clade(clade21_Dipsacoideae_Valerianoideae_Morinaceae, clade28_Linnaeoideae)
+clade31_Lonicera_gynochlamydea_pileata												= clade("Lonicera_gynochlamydea", "Lonicera_pileata")
+clade32_Lonicera_maackii_quinquelocularis 											= clade("Lonicera_maackii", "Lonicera_quinquelocuaris")
+clade33_Lonicera_floribunda_xylosteum 												= clade("Lonicera_floribunda", "Lonicera_xylosteum")
+clade34_Lonicera_floribunda_xylosteum_maackii_quinquelocularis 						= clade(clade32_Lonicera_maackii_quinquelocularis, clade33_Lonicera_floribunda_xylosteum)
+clade35_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica 			= clade(clade34_Lonicera_floribunda_xylosteum_maackii_quinquelocularis, "Lonicera_tatarica")
+clade64_FLonicera_krassilovii														= clade("Lonicera_krassilovii", "Lonicera_orientalis")
+clade36_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica_orientalis 	= clade(clade35_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica, clade64_FLonicera_krassilovii)
+clade37_Lonicera_fragrantissima_standishii 											= clade("Lonicera_fragrantissima", "Lonicera_standishii")
+clade38_Lonicera_fragrantissima_standishii_ferdinandii 								= clade(clade37_Lonicera_fragrantissima_standishii, "Lonicera_ferdinandi")
+clade39_All_Lonicera_sans_periclymenum_careulea_gynochlamydea_pileata 				= clade(clade36_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica_orientalis, clade38_Lonicera_fragrantissima_standishii_ferdinandii)
+clade40_All_Lonicera_sans_periclymenum_careulea 									= clade(clade39_All_Lonicera_sans_periclymenum_careulea_gynochlamydea_pileata,clade31_Lonicera_gynochlamydea_pileata)
+clade41_All_Lonicera_sans_careulea 													= clade(clade40_All_Lonicera_sans_periclymenum_careulea, "Lonicera_periclymenum")
+clade65_FLonicera_protojaponica														= clade("Lonicera_protojaponica", "Lonicera_caerulea")
+clade42_All_Lonicera 																= clade(clade41_All_Lonicera_sans_careulea, clade65_FLonicera_protojaponica	)
+clade66_FLonicera_Florissant														= clade("Lonicera_Florissant", clade42_All_Lonicera)
+clade43_Symphoricarpos_Triosteum 													= clade("Symphoricarpos_occidentalis", "Triosteum_himalayanum")
+clade44_Symphoricarpos_Triosteum_Leycesteria 										= clade(clade43_Symphoricarpos_Triosteum, "Leycesteria_formosa")
+clade45_Caprifolieae 																= clade(clade44_Symphoricarpos_Triosteum_Leycesteria, clade66_FLonicera_Florissant)
+clade67_FHeptacodium_spinosa														= clade("Heptacodium_spinosa", "Heptacodium_miconioides")
+clade46_Caprifolioideae 															= clade(clade45_Caprifolieae, clade67_FHeptacodium_spinosa)
+clade47_Diervilla_Weigela 															= clade("Diervilla_sessilifolia", "Weigela_florida")
+clade68_FDiervilla_Germany															= clade("Diervilla_Germany", clade47_Diervilla_Weigela)
+clade48_Caprifolieaceae 															= clade(clade29_Dipsacoideae_Valerianoideae_Morinaceae_Linnaeoideae, clade46_Caprifolioideae, clade68_FDiervilla_Germany)
+clade49_Sambucus_caerulea_pubescens 												= clade("Sambucus_cerulea", "Sambucus_pubens")
+clade50_Sambucus 																	= clade(clade49_Sambucus_caerulea_pubescens, "Sambucus_gaudichaudiana")
+clade72_FSambucus_Germany															= clade("Sambucus_Germany", clade50_Sambucus)
+clade73_FSambucus_Denmark															= clade("Sambucus_Denmark", clade72_FSambucus_Germany)
+clade51_Viburnum_coriaceum_vernicosum 												= clade("Viburnum_coriaceum", "Viburnum_vernicosum")
+clade52_Viburnum_coriaceum_vernicosum_luzonicum 									= clade(clade51_Viburnum_coriaceum_vernicosum, "Viburnum_luzonicum")
+clade53_Viburnum_coriaceum_vernicosum_luzonicum_jamesonii 							= clade(clade52_Viburnum_coriaceum_vernicosum_luzonicum, "Viburnum_jamesonii")
+clade54_Viburnum_lantenoides_taiwanianum 											= clade("Viburnum_lantenoides", "Viburnum_taiwanianum")
+clade55_Viburnum_lantenoides_taiwanianum_lutescens 									= clade(clade54_Viburnum_lantenoides_taiwanianum, "Viburnum_lutescens")
+clade56_Viburnum_lantenoides_taiwanianum_lutescens_rhytidophyllum 					= clade(clade55_Viburnum_lantenoides_taiwanianum_lutescens, "Viburnum_rhytidophyllum")
+clade57_Viburnum 																	= clade(clade53_Viburnum_coriaceum_vernicosum_luzonicum_jamesonii, clade56_Viburnum_lantenoides_taiwanianum_lutescens_rhytidophyllum)
+clade69_FViburnum_Paris																= clade("Viburnum_Paris", clade57_Viburnum)
+clade70_FViburnum_Iceland															= clade("Viburnum_Iceland", clade69_FViburnum_Paris)
+clade58_Viburnum_Sambucus 															= clade(clade70_FViburnum_Iceland, clade73_FSambucus_Denmark)
+clade71_FViburnum_PrincentonChert													= clade("Viburnum_PrincentonChert", clade58_Viburnum_Sambucus)
+clade59_Dipsacales 																	= clade(clade48_Caprifolieaceae, clade71_FViburnum_PrincentonChert)
+
+constraints = [
+	clade3_Sixalix_group,
+	clade4_Pycnocomon_group,
+	clade5_Sixalix_Lomelosia_Pycnocomon_Pteracephalodes,
+	clade6_Bassecoia_group,
+	clade7_Dipsacus_group,
+	clade8_Dipsacus_Cephalaria_Succisa,
+	clade9_Knautia_group,
+	clade10_Dipsaceae,
+	clade11_Dipsacoideae,
+	clade12_Plectritis_Valeriana,
+	clade13_Plectritis_Valeriana_Centranthus,
+	clade14_Valeriana_Fedia,
+	clade15_Fedia_upwards_small_group,
+	clade16_Fedia_upwards_small_group_Nardostachys,
+	clade61_FPatrinia_hokiana,
+	clade17_Valerianoideae,
+	clade18_Dipsacoideae_Valerianoideae,
+	clade19_Cryptothaldia_Morina,
+	clade20_Morinaceae,
+	clade21_Dipsacoideae_Valerianoideae_Morinaceae,
+	clade23_Diabelia_Abelia,
+	clade24_Diabelia_Abelia_Kolkwitzia,
+	clade63_FDipelta_bovayensis,
+	clade24a_Diabelia_Abelia_Kolkwitzia_Dipelta,
+	clade62_FDiplodipelta_reniptera,
+	clade25_Linneae_Veslea,
+	clade26_Linneeae,
+	clade27_Zabelia,
+	clade28_Linnaeoideae,
+	clade29_Dipsacoideae_Valerianoideae_Morinaceae_Linnaeoideae,
+	clade31_Lonicera_gynochlamydea_pileata,
+	clade32_Lonicera_maackii_quinquelocularis,
+	clade33_Lonicera_floribunda_xylosteum,
+	clade34_Lonicera_floribunda_xylosteum_maackii_quinquelocularis,
+	clade35_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica,
+	clade64_FLonicera_krassilovii,
+	clade36_Lonicera_floribunda_xylosteum_maackii_quinquelocularis_tatarica_orientalis,
+	clade37_Lonicera_fragrantissima_standishii,
+	clade38_Lonicera_fragrantissima_standishii_ferdinandii,
+	clade39_All_Lonicera_sans_periclymenum_careulea_gynochlamydea_pileata,
+	clade40_All_Lonicera_sans_periclymenum_careulea,
+	clade41_All_Lonicera_sans_careulea,
+	clade65_FLonicera_protojaponica,	
+	clade42_All_Lonicera,
+	clade66_FLonicera_Florissant,
+	clade43_Symphoricarpos_Triosteum,
+	clade44_Symphoricarpos_Triosteum_Leycesteria,
+	clade45_Caprifolieae,
+	clade67_FHeptacodium_spinosa,
+	clade46_Caprifolioideae,
+	clade47_Diervilla_Weigela,
+	clade68_FDiervilla_Germany,
+	clade48_Caprifolieaceae,
+	clade49_Sambucus_caerulea_pubescens,
+	clade50_Sambucus,
+	clade72_FSambucus_Germany,
+	clade73_FSambucus_Denmark,
+	clade51_Viburnum_coriaceum_vernicosum,
+	clade52_Viburnum_coriaceum_vernicosum_luzonicum,
+	clade53_Viburnum_coriaceum_vernicosum_luzonicum_jamesonii,
+	clade54_Viburnum_lantenoides_taiwanianum,
+	clade55_Viburnum_lantenoides_taiwanianum_lutescens,
+	clade56_Viburnum_lantenoides_taiwanianum_lutescens_rhytidophyllum,
+	clade57_Viburnum,
+	clade69_FViburnum_Paris,
+	clade70_FViburnum_Iceland,
+	clade58_Viburnum_Sambucus,
+	clade71_FViburnum_PrincentonChert,
+	clade59_Dipsacales ]
+
+fbd_tree ~ dnConstrainedTopology(fbd_dist, constraints=constraints)
+
+moves.append( mvFNPR(fbd_tree, weight=15.0) )
+moves.append( mvCollapseExpandFossilBranch(fbd_tree, origin_time, weight=6.0) )
+
+moves.append( mvNodeTimeSlideUniform(fbd_tree, weight=40.0) )
+moves.append( mvRootTimeSlideUniform(fbd_tree, origin_time, weight=5.0) )				
+
+#account for uncertainty in the age estimates of our fossils#
+fossils = fbd_tree.getFossils()
+for(i in 1:fossils.size())
+{
+    t[i] := tmrca(fbd_tree, clade(fossils[i]))
+
+    a_i = fossils[i].getMinAge()
+    b_i = fossils[i].getMaxAge()
+
+    F[i] ~ dnUniform(t[i] - b_i, t[i] - a_i)
+    F[i].clamp( 0 )
+}
+
+moves.append( mvFossilTimeSlideUniform(fbd_tree, origin_time, weight=5.0) )
+
+#we can create num_samp_anc to compute the number of sampled ancestors in our fbd_tree#
+num_samp_anc := fbd_tree.numSampledAncestors()
+
+#we will monitor the tree after removing taxa for which we did not have any molecular or morphological data#
+pruned_tree := fnPruneTree(fbd_tree, prune=v(taxa[60],taxa[61],taxa[62],taxa[63],taxa[64],taxa[65],taxa[66],taxa[67],taxa[68],taxa[69],taxa[70],taxa[71],taxa[72]))
+												
+                           
+
+
+
+
+	  
